@@ -1,0 +1,7 @@
+debug 1
+push 1
+push 2
+dup 1
+dup 2
+dup 10
+hlt
