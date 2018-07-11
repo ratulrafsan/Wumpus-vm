@@ -1,0 +1,21 @@
+push 40 -- arg n
+call @FACT
+popprev 1  -- clean up
+hlt
+FACT:
+ldarg 1 -- get n
+dup   -- duplicate n
+push 0
+bgte @FACTENDZERO -- if n == 0 then jmp FEZ
+pop -- if then then remove that 0
+dec
+call @FACT
+swap -- [n1,n2] -> [n2,n1]
+pop
+mul -- n * n-1
+FACTRETURN:
+ret
+FACTENDZERO:
+pop -- remove the dupped 0
+push 1 -- initial 1
+jmp @FACTRETURN
