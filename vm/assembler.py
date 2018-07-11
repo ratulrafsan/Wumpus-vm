@@ -7,7 +7,7 @@ class assembler:
             "mul":      {"opcode": 3,  "param_count": 0},
             "div":      {"opcode": 4,  "param_count": 0},
             "mod":      {"opcode": 5,  "param_count": 0},
-            "dup":      {"opcode": 6,  "param_count": 0},
+            "dup":      {"opcode": 6,  "param_count": 1},
             "push":     {"opcode": 7,  "param_count": 1},
             "pop":      {"opcode": 8,  "param_count": 0},
             "swap":     {"opcode": 9,  "param_count": 0},
@@ -20,15 +20,14 @@ class assembler:
             "blt":      {"opcode": 16, "param_count": 1},
             "blte":     {"opcode": 17, "param_count": 1},
             "ovr":      {"opcode": 18, "param_count": 0},
-            "dup2":     {"opcode": 19, "param_count": 0},
-            "ovr2":     {"opcode": 20, "param_count": 0},
-            "popprev":  {"opcode": 21, "param_count": 1},
-            "call":     {"opcode": 22, "param_count": 1},
-            "ret":      {"opcode": 23, "param_count": 0},
-            "ldarg":    {"opcode": 24, "param_count": 1},
-            "inc":      {"opcode": 25, "param_count": 0},
-            "dec":      {"opcode": 26, "param_count": 0},
-            "hlt":      {"opcode": 27, "param_count": 0}
+            "popprev":  {"opcode": 19, "param_count": 1},
+            "call":     {"opcode": 20, "param_count": 1},
+            "ret":      {"opcode": 21, "param_count": 0},
+            "ldarg":    {"opcode": 22, "param_count": 1},
+            "inc":      {"opcode": 23, "param_count": 0},
+            "dec":      {"opcode": 24, "param_count": 0},
+            "debug":    {"opcode": 25, "param_count": 1},
+            "hlt":      {"opcode": 26, "param_count": 0}
         }
 
     #[line for line in open(file,r)]

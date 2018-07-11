@@ -5,6 +5,7 @@ class CPU:
     cpu_stack_arg = list()  # argument stack
     last_op = None  # last executed opCode
     panic = False  # is the cpu in a faulted state?
+    debug_mode = False
 
     __memory = None
     __memory_size = 0
@@ -31,7 +32,7 @@ class CPU:
             {"mnemonic": "mul",     "param_count": 0,       "op": self.mul},         # 3
             {"mnemonic": "div",     "param_count": 0,       "op": self.div},         # 4
             {"mnemonic": "mod",     "param_count": 0,       "op": self.mod},         # 5
-            {"mnemonic": "dup",     "param_count": 0,       "op": self.dup},         # 6
+            {"mnemonic": "dup",     "param_count": 1,       "op": self.dup},         # 6
             {"mnemonic": "push",    "param_count": 1,       "op": self.push},        # 7
             {"mnemonic": "pop",     "param_count": 0,       "op": self.pop},         # 8
             {"mnemonic": "swap",    "param_count": 0,       "op": self.swap},        # 9
@@ -44,14 +45,13 @@ class CPU:
             {"mnemonic": "blt",     "param_count": 1,       "op": self.blt},         # 16 <
             {"mnemonic": "blte",    "param_count": 1,       "op": self.blte},        # 17 <=
             {"mnemonic": "ovr",     "param_count": 0,       "op": self.ovr},
-            {"mnemonic": "dup2",    "param_count": 0,       "op": self.dup2},
-            {"mnemonic": "ovr2",    "param_count": 0,       "op": self.ovr2},
             {"mnemonic": "popprev", "param_count": 1,       "op": self.popprev},
             {"mnemonic": "call",    "param_count": 1,       "op": self.call},
             {"mnemonic": "ret",     "param_count": 0,       "op": self.ret},
             {"mnemonic": "ldarg",   "param_count": 1,       "op": self.ldarg},
             {"mnemonic": "inc",     "param_count": 0,       "op": self.inc},
             {"mnemonic": "dec",     "param_count": 0,       "op": self.dec},
+            {"mnemonic": "debug",   "param_count": 1,       "op": self.debug},
             {"mnemonic": "hlt",     "param_count": 0,       "op": self.halt},        # 1
         ]
 
@@ -105,11 +105,12 @@ class CPU:
     def pop(self):
         self.cpu_stack.pop()
 
-    def dup(self):
-        self.cpu_stack.append(self.cpu_stack[-1])
+    def dup(self, count):
+        if len(self.cpu_stack) < count:
+            self.panic = True
+            raise SystemError("Dup requested: {0}. Available items: {1}".format(count, len(self.cpu_stack)))
 
-    def dup2(self):
-        self.cpu_stack += [self.cpu_stack[-2], self.cpu_stack[-1]]
+        self.cpu_stack += self.cpu_stack[-count:]
 
     # pops the top of the stack and jumps to that, provided that its a valid address
     def jmptos(self):
@@ -124,61 +125,41 @@ class CPU:
     # >>> all conditional branches instructions pop top two elements for comparison
     # if the branching statement yields false then the values are restored to stack
     def beq(self, address):
-        a = self.cpu_stack.pop()
-        b = self.cpu_stack.pop()
-        if a == b:
+        if self.cpu_stack[-1] == self.cpu_stack[-2]:
+            self.cpu_stack = self.cpu_stack[:-2]
             self.jmp(address)
-        else:
-            self.cpu_stack += [b, a]
 
     def bne(self, address):
-        a = self.cpu_stack.pop()
-        b = self.cpu_stack.pop()
-        if a != b:
+        if self.cpu_stack[-1] != self.cpu_stack[-2]:
+            self.cpu_stack = self.cpu_stack[:-2]
             self.jmp(address)
-        else:
-            self.cpu_stack += [b, a]
 
     def bgt(self, address):
-        a = self.cpu_stack.pop()
-        b = self.cpu_stack.pop()
-        if a > b:
+        if self.cpu_stack[-1] > self.cpu_stack[-2]:
+            self.cpu_stack = self.cpu_stack[:-2]
             self.jmp(address)
-        else:
-            self.cpu_stack += [b, a]
 
     def bgte(self, address):
-        a = self.cpu_stack.pop()
-        b = self.cpu_stack.pop()
-        if a >= b:
+        if self.cpu_stack[-1] >= self.cpu_stack[-2]:
+            self.cpu_stack = self.cpu_stack[:-2]
             self.jmp(address)
-        else:
-            self.cpu_stack += [b, a]
 
     def blt(self, address):
-        a = self.cpu_stack.pop()
-        b = self.cpu_stack.pop()
-        if a < b:
+        if self.cpu_stack[-1] < self.cpu_stack[-2]:
+            self.cpu_stack = self.cpu_stack[:-2]
             self.jmp(address)
-        else:
-            self.cpu_stack += [b, a]
 
     def blte(self, address):
-        a = self.cpu_stack.pop()
-        b = self.cpu_stack.pop()
-        if a <= b:
+        if self.cpu_stack[-1] <= self.cpu_stack[-2]:
+            self.cpu_stack = self.cpu_stack[:-2]
             self.jmp(address)
-        else:
-            self.cpu_stack += [b, a]
 
     def ovr(self):
         self.cpu_stack.append(self.cpu_stack[-2])
 
-    def ovr2(self):
-        self.cpu_stack.append(self.cpu_stack[-3])
-
     def popprev(self, n):
         if n > len(self.cpu_stack) - 1:
+            self.panic = True
             raise SystemError("Popprev requested: {0}. Available items: {1}".format(n, len(self.cpu_stack)))
         tos = self.cpu_stack.pop()
         while n > 0:
@@ -192,6 +173,7 @@ class CPU:
         self.fp = len(self.cpu_stack)
         self.jmp(address)
 
+    # ret always expects a return value
     def ret(self):
         tos = self.cpu_stack.pop()
         del self.cpu_stack[self.fp:]
@@ -221,6 +203,12 @@ class CPU:
             return
         self.cpu_stack[-1], self.cpu_stack[-2] = self.cpu_stack[-2], self.cpu_stack[-1]
 
+    def debug(self, val):
+        if val == 1:
+            self.debug_mode = True
+        else:
+            self.debug_mode = False
+
     def execute(self):
         while self.ip < self.__memory_size and not self.panic:
             ins = self.instructions[self.memory_load(self.ip)]
@@ -231,6 +219,10 @@ class CPU:
                 self.ip += ins["param_count"]
             ins["op"](*params)
             self.ip += 1
-            #print(self.ip-ins["param_count"], "\t:", ins["mnemonic"] + " ", *params,
-            #      "\t" if len(params) > 0 else "\t\t",
-            #     self.cpu_stack)
+            self.last_op = ins["mnemonic"]
+            if self.panic:
+                print(self.last_op, "caused panic.")
+            if self.debug_mode:
+                print(self.ip-ins["param_count"], "\t:", ins["mnemonic"] + " ", *params,
+                      "\t" if len(params) > 0 else "\t\t",
+                      self.cpu_stack)
