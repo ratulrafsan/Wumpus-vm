@@ -57,7 +57,7 @@ class CPU:
 
     def check_memory_bound(self, position):
         if position > self.__memory_size:
-            raise IndexError("Memory size: {0}, Position requested: {1}".format(self.__memory_size, position))
+            raise SystemError("Memory size: {0}, Position requested: {1}".format(self.__memory_size, position))
 
     def memory_store(self, position, data):
         self.check_memory_bound(position)
@@ -213,6 +213,7 @@ class CPU:
         while self.ip < self.__memory_size and not self.panic:
             ins = self.instructions[self.memory_load(self.ip)]
             params = []
+            print("(ip: {0}, fp: {1}) ".format(self.ip, self.fp), end='', flush=True)
             if ins["param_count"] > 0:
                 for i in range(1, ins["param_count"]+1):
                     params.append(self.memory_load(self.ip+i))
@@ -223,6 +224,10 @@ class CPU:
             if self.panic:
                 print(self.last_op, "caused panic.")
             if self.debug_mode:
-                print(self.ip-ins["param_count"], "\t:", ins["mnemonic"] + " ", *params,
+                print(self.ip-ins["param_count"],
+                      "\t:", ins["mnemonic"] + " ", *params,
                       "\t" if len(params) > 0 else "\t\t",
                       self.cpu_stack)
+                if self.last_op == "call":
+                    print("Old frame pointer: ", self.cpu_stack[-2], ", Return address: ",
+                          self.cpu_stack[-1], ", New frame pointer: ", self.fp)

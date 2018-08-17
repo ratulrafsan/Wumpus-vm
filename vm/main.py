@@ -1,7 +1,7 @@
 from vm.CPU import CPU
 from vm.assembler import assembler
 
-fileName = "tests/test3.wasm"
+fileName = "tests/factorial.wasm"
 
 cpu = CPU(memory_size=1024)
 asm = assembler()

@@ -1,7 +1,20 @@
+var arr[10]={1,2,3,534} -- array of size 10
+var a = 20.2
+var b = -30
+var c
+def add(var a, var b){
+    ldarg a
+    ldarg b
+    add
+    ret
+}
 debug 1
 push 1
 push 2
+call add(20,30)
+push normal_variable
 dup 1
 dup 2
 dup 10
+push int[3]
 hlt

@@ -1,10 +1,10 @@
-push 40 -- arg n
+push 4 -- arg n
 call @FACT
 popprev 1  -- clean up
 hlt
 FACT:
 ldarg 1 -- get n
-dup   -- duplicate n
+dup 1  -- duplicate n
 push 0
 bgte @FACTENDZERO -- if n == 0 then jmp FEZ
 pop -- if then then remove that 0
